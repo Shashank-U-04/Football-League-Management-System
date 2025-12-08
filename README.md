@@ -1,40 +1,98 @@
-- **Modern UI**: Sleek interface with dark/light mode support.
+# ⚽ Football League Management System
 
-## Prerequisites
-- Python 3.8+
-- MySQL Server
+A comprehensive Full-Stack Web Application for managing football leagues, tournaments, teams, players, and matches. efficient, and user-friendly.
 
-## Setup
+![ER Diagram](ERD_Final.png)
 
-1.  **Clone the repository**:
-    ```bash
-    git clone <repository-url>
-    cd Football-League-Management-System
-    ```
+## 🚀 Features
 
-2.  **Install dependencies**:
-    ```bash
-    pip install -r requirements.txt
-    ```
+-   **🏆 Tournament Management**: Create and manage leagues and knockout tournaments.
+-   **👥 Team & Player Administration**: Manage team rosters, player details, and transfers.
+-   **📅 Match Scheduling**: Schedule matches, setting venues and dates.
+-   **⚡ Real-time Scoring**: Record match results and automatically update standings.
+-   **📊 Dynamic Leaderboard**: Automated points calculation and ranking system.
+-   **💻 Modern UI**: Responsive dashboard built with Next.js and Tailwind CSS.
+-   **🔐 Secure Backend**: Robust Node.js/Express API with MySQL database integration.
 
-3.  **Configure Database**:
-    - Import `database.sql` into your MySQL server.
-    - Update the `.env` file with your database credentials:
-        ```env
-        DB_HOST=localhost
-        DB_USER=root
-        DB_PASSWORD=your_password
-        DB_NAME=FootballLeagueDB
-        ```
+## 🛠️ Tech Stack
 
-## Running the Application
-To start the application, run:
+-   **Frontend**: Next.js 14, React, Tailwind CSS, Lucide Icons
+-   **Backend**: Node.js, Express.js
+-   **Database**: MySQL
+-   **Tools**: Swagger (API Docs), Mermaid (Diagrams)
+
+## 📋 Prerequisites
+
+Ensure you have the following installed:
+-   **Node.js** (v18 or higher)
+-   **MySQL Server**
+
+## ⚙️ Installation & Setup
+
+### 1. Clone the Repository
 ```bash
-python run.py
+git clone <repository-url>
+cd Football-League-Management-System
 ```
 
-## Project Structure
-- `src/main.py`: Entry point of the application.
-- `src/gui.py`: User interface implementation using CustomTkinter.
-- `src/database.py`: Database connection and operations.
-- `database.sql`: SQL script to set up the database schema.
+### 2. Database Configuration
+1.  Create a MySQL database (e.g., `FootballLeagueDB`).
+2.  Update the `.env` file in the root directory (or create one based on a template) with your credentials:
+    ```env
+    DB_HOST=localhost
+    DB_USER=root
+    DB_PASSWORD=your_password
+    DB_NAME=FootballLeagueDB
+    ```
+
+### 3. Automated Setup (Windows)
+Simply run the setup script to install dependencies and initialize the database:
+```cmd
+setup.bat
+```
+
+### 4. Manual Setup
+If you prefer manual installation:
+
+**Install Dependencies:**
+```bash
+npm install                # Root dependencies
+cd backend && npm install  # Backend dependencies
+cd ../frontend && npm install # Frontend dependencies
+```
+
+**Initialize Database:**
+```bash
+cd backend
+node scripts/reset_db.js
+```
+
+## ▶️ Running the Application
+
+Start both the frontend and backend servers concurrently:
+
+```bash
+npm run dev
+```
+
+-   **Frontend**: [http://localhost:3000](http://localhost:3000)
+-   **Backend API**: [http://localhost:5001](http://localhost:5001)
+-   **Swagger Docs**: [http://localhost:5001/api-docs](http://localhost:5001/api-docs)
+
+## 📂 Project Structure
+
+```
+Football-League-Management-System/
+├── backend/                # Node.js/Express Server
+│   ├── config/             # Database configuration
+│   ├── controllers/        # Request handlers
+│   ├── routes/             # API endpoints
+│   └── server.js           # Entry point
+├── frontend/               # Next.js Web Application
+│   ├── app/                # Pages and routing
+│   ├── components/         # Reusable UI components
+│   └── lib/                # API client & utilities
+├── database.sql            # Database Schema
+├── ERD_Final.html          # Interactive ER Diagram
+└── setup.bat               # Windows Setup Script
+```

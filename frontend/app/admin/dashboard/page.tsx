@@ -184,7 +184,7 @@ export default function AdminDashboard() {
             <div className="max-w-5xl mx-auto space-y-8 py-12">
                 <div className="text-center space-y-4">
                     <h1 className="text-4xl font-bold text-slate-900 dark:text-white">Admin Dashboard</h1>
-                    <p className="text-slate-500 dark:text-slate-400 text-lg">Select a category to manage</p>
+                    <p className="text-blue-900 text-xl font-bold">Select a category to manage</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -229,11 +229,11 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                     <button onClick={() => setView('menu')} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
-                        <ArrowLeft className="w-6 h-6 text-slate-600 dark:text-slate-300" />
+                        <ArrowLeft className="w-6 h-6 text-blue-900" />
                     </button>
                     <div>
                         <h1 className="text-3xl font-bold text-slate-900 dark:text-white capitalize">Manage {activeTab}s</h1>
-                        <p className="text-slate-500 dark:text-slate-400">Add, edit, or remove {activeTab}s</p>
+                        <p className="text-blue-800 font-semibold">Add, edit, or remove {activeTab}s</p>
                     </div>
                 </div>
             </div>
