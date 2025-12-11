@@ -12,7 +12,9 @@ export default function Navbar() {
     const [darkMode, setDarkMode] = useState(false);
 
     useEffect(() => {
-        if (localStorage.getItem('theme') === 'dark') {
+        const theme = localStorage.getItem('theme');
+        if (theme === 'dark') {
+            // eslint-disable-next-line
             setDarkMode(true);
             document.documentElement.classList.add('dark');
         }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter, useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
@@ -47,7 +47,7 @@ const matchResultSchema = z.object({
     team2_goals: z.string().transform((val) => parseInt(val, 10)),
 });
 
-export default function AdminDashboard() {
+function AdminDashboardContent() {
     const { user } = useAuthStore();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -60,6 +60,7 @@ export default function AdminDashboard() {
     useEffect(() => {
         const viewParam = searchParams.get('view');
         if (viewParam === 'menu') {
+            // eslint-disable-next-line
             setView('menu');
         }
 
@@ -68,13 +69,7 @@ export default function AdminDashboard() {
         }
     }, [user, router, searchParams]);
 
-    useEffect(() => {
-        if (view === 'manage') {
-            fetchData();
-        }
-    }, [view, activeTab]);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             let endpoint = '';
             if (activeTab === 'team') endpoint = '/teams';
@@ -89,7 +84,14 @@ export default function AdminDashboard() {
         } catch (error) {
             console.error('Error fetching data', error);
         }
-    };
+    }, [activeTab]);
+
+    useEffect(() => {
+        if (view === 'manage') {
+            // eslint-disable-next-line
+            fetchData();
+        }
+    }, [view, fetchData]);
 
     const { register: registerTournament, handleSubmit: handleSubmitTournament, reset: resetTournament, setValue: setValTournament } = useForm({ resolver: zodResolver(tournamentSchema) });
     const { register: registerTeam, handleSubmit: handleSubmitTeam, reset: resetTeam, setValue: setValTeam } = useForm({ resolver: zodResolver(teamSchema) });
@@ -395,5 +397,13 @@ export default function AdminDashboard() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function AdminDashboard() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center">Loading dashboard...</div>}>
+            <AdminDashboardContent />
+        </Suspense>
     );
 }
