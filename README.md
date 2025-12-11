@@ -16,7 +16,7 @@ A comprehensive Full-Stack Web Application for managing football leagues, tourna
 
 ## 🛠️ Tech Stack
 
--   **Frontend**: Next.js 14, React, Tailwind CSS, Lucide Icons
+-   **Frontend**: Next.js 16, React 19, Tailwind CSS, Lucide Icons
 -   **Backend**: Node.js, Express.js
 -   **Database**: MySQL
 -   **Tools**: Swagger (API Docs), Mermaid (Diagrams)
