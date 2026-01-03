@@ -8,7 +8,7 @@ import FormInput from '@/components/ui/FormInput';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Trophy, Users, Calendar, Medal, Edit, Trash2, ArrowLeft } from 'lucide-react';
+import { Plus, Trophy, Users, Calendar, Medal, Edit, Trash2, ArrowLeft, CheckCircle } from 'lucide-react';
 
 // Schemas
 const tournamentSchema = z.object({
@@ -39,11 +39,19 @@ const playerSchema = z.object({
     team_id: z.string().transform((val) => parseInt(val, 10)),
 });
 
-const matchResultSchema = z.object({
-    match_id: z.string().transform((val) => parseInt(val, 10)),
+// Two schemas for Match: Schedule and Result
+const scheduleMatchSchema = z.object({
     team1_id: z.string().transform((val) => parseInt(val, 10)),
-    team1_goals: z.string().transform((val) => parseInt(val, 10)),
     team2_id: z.string().transform((val) => parseInt(val, 10)),
+    match_date: z.string().min(1, 'Date is required'),
+    venue: z.string().min(1, 'Venue is required'),
+});
+
+const matchResultSchema = z.object({
+    match_id: z.number(),
+    team1_id: z.number(),
+    team1_goals: z.string().transform((val) => parseInt(val, 10)),
+    team2_id: z.number(),
     team2_goals: z.string().transform((val) => parseInt(val, 10)),
 });
 
@@ -53,14 +61,17 @@ function AdminDashboardContent() {
     const searchParams = useSearchParams();
     const [view, setView] = useState<'menu' | 'manage'>('menu');
     const [activeTab, setActiveTab] = useState<'tournament' | 'team' | 'player' | 'match'>('team');
+    // 'schedule' | 'result' for Match tab
+    const [matchMode, setMatchMode] = useState<'schedule' | 'result'>('schedule');
+
     const [message, setMessage] = useState('');
     const [dataList, setDataList] = useState<any[]>([]);
+    const [teamList, setTeamList] = useState<any[]>([]); // For dropdowns
     const [editingItem, setEditingItem] = useState<any>(null);
 
     useEffect(() => {
         const viewParam = searchParams.get('view');
         if (viewParam === 'menu') {
-            // eslint-disable-next-line
             setView('menu');
         }
 
@@ -68,6 +79,20 @@ function AdminDashboardContent() {
             router.push('/login');
         }
     }, [user, router, searchParams]);
+
+    // Fetch teams for dropdown (run once or when needed)
+    const fetchTeams = useCallback(async () => {
+        try {
+            const res = await api.get('/teams');
+            setTeamList(res.data.data || []);
+        } catch (error) {
+            console.error('Failed to fetch teams', error);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchTeams();
+    }, [fetchTeams]);
 
     const fetchData = useCallback(async () => {
         try {
@@ -88,7 +113,6 @@ function AdminDashboardContent() {
 
     useEffect(() => {
         if (view === 'manage') {
-            // eslint-disable-next-line
             fetchData();
         }
     }, [view, fetchData]);
@@ -96,25 +120,46 @@ function AdminDashboardContent() {
     const { register: registerTournament, handleSubmit: handleSubmitTournament, reset: resetTournament, setValue: setValTournament } = useForm({ resolver: zodResolver(tournamentSchema) });
     const { register: registerTeam, handleSubmit: handleSubmitTeam, reset: resetTeam, setValue: setValTeam } = useForm({ resolver: zodResolver(teamSchema) });
     const { register: registerPlayer, handleSubmit: handleSubmitPlayer, reset: resetPlayer, setValue: setValPlayer } = useForm({ resolver: zodResolver(playerSchema) });
-    const { register: registerMatch, handleSubmit: handleSubmitMatch, reset: resetMatch, setValue: setValMatch } = useForm({ resolver: zodResolver(matchResultSchema) });
+
+    // Match Forms
+    const { register: registerSchedule, handleSubmit: handleSubmitSchedule, reset: resetSchedule, setValue: setValSchedule } = useForm({ resolver: zodResolver(scheduleMatchSchema) });
+    const { register: registerResult, handleSubmit: handleSubmitResult, reset: resetResult, setValue: setValResult } = useForm({ resolver: zodResolver(matchResultSchema) });
 
     const onSubmit = async (endpoint: string, data: any, resetFunc: any, successMsg: string) => {
         try {
-            if (editingItem) {
-                const id = editingItem.id || editingItem.team_id || editingItem.player_id || editingItem.match_id || editingItem.tournament_id;
+            // Special handling for Match Result (always POST to procedure)
+            if (activeTab === 'match' && matchMode === 'result') {
+                // Use data from form, but fallback to editingItem if available (for safety)
+                const processedData = {
+                    ...data,
+                    match_id: data.match_id || editingItem?.match_id,
+                };
+                await api.post('/matches/result', processedData);
+                setMessage('Match Result Recorded!');
+            }
+            else if (editingItem) {
+                // Determine the correct ID field based on the active tab/item
+                const id = editingItem.player_id || editingItem.team_id || editingItem.tournament_id || editingItem.match_id || editingItem.id;
+
                 await api.put(`${endpoint}/${id}`, data);
                 setMessage('Item updated successfully!');
             } else {
                 await api.post(endpoint, data);
                 setMessage(successMsg);
             }
+
             resetFunc();
             setEditingItem(null);
             fetchData();
+            // Refresh teams if we just added/edited a team
+            if (activeTab === 'team') {
+                fetchTeams();
+            }
+
             setTimeout(() => setMessage(''), 3000);
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            setMessage('Operation failed. Please check inputs.');
+            setMessage(error.response?.data?.message || 'Operation failed. Please check inputs.');
         }
     };
 
@@ -143,40 +188,64 @@ function AdminDashboardContent() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
         if (activeTab === 'tournament') {
-            setValTournament('name', item.name);
-            setValTournament('type', item.type);
-            setValTournament('host_country', item.host_country);
-            setValTournament('no_of_teams', item.no_of_teams.toString());
-            setValTournament('no_of_matches', item.no_of_matches.toString());
+            setValTournament('name', item.name || '');
+            setValTournament('type', item.type || 'League');
+            setValTournament('host_country', item.host_country || '');
+            setValTournament('no_of_teams', item.no_of_teams?.toString() || '');
+            setValTournament('no_of_matches', item.no_of_matches?.toString() || '');
             setValTournament('start_date', item.start_date ? item.start_date.split('T')[0] : '');
             setValTournament('end_date', item.end_date ? item.end_date.split('T')[0] : '');
         } else if (activeTab === 'team') {
-            setValTeam('team_name', item.team_name);
-            setValTeam('coach_name', item.coach_name);
-            setValTeam('foundation_year', item.foundation_year.toString());
-            setValTeam('tournament_id', item.tournament_id);
+            setValTeam('team_name', item.team_name || '');
+            setValTeam('coach_name', item.coach_name || '');
+            setValTeam('foundation_year', item.foundation_year?.toString() || '');
+            setValTeam('tournament_id', item.tournament_id || 1);
         } else if (activeTab === 'player') {
-            setValPlayer('name', item.name);
-            setValPlayer('age', item.age.toString());
-            setValPlayer('gender', item.gender);
-            setValPlayer('position', item.position);
-            setValPlayer('height_cm', item.height_cm.toString());
-            setValPlayer('weight_kg', item.weight_kg.toString());
-            setValPlayer('jersey_number', item.jersey_number.toString());
-            setValPlayer('team_id', item.team_id.toString());
-        } else if (activeTab === 'match') {
-            setValMatch('match_id', item.match_id.toString());
-            setValMatch('team1_id', item.team1_id.toString());
-            setValMatch('team1_goals', item.team1_goals.toString());
-            setValMatch('team2_id', item.team2_id.toString());
-            setValMatch('team2_goals', item.team2_goals.toString());
+            setValPlayer('name', item.name || '');
+            setValPlayer('age', item.age?.toString() || '');
+            setValPlayer('gender', item.gender || 'M');
+            setValPlayer('position', item.position || '');
+            setValPlayer('height_cm', item.height_cm?.toString() || '');
+            setValPlayer('weight_kg', item.weight_kg?.toString() || '');
+            setValPlayer('jersey_number', item.jersey_number?.toString() || '');
+            setValPlayer('team_id', item.team_id?.toString() || '');
         }
+        else if (activeTab === 'match') {
+            // Pre-fill Schedule Form Data (so user can edit details if they choose Schedule mode)
+            setValSchedule('team1_id', item.team1_id?.toString() || '');
+            setValSchedule('team2_id', item.team2_id?.toString() || '');
+            setValSchedule('match_date', item.match_date ? item.match_date.split('T')[0] : '');
+            setValSchedule('venue', item.venue || '');
+
+            // Prepare Result Form Pre-fill as well (in case they switch to Result)
+            // We reuse the logic from openMatchResultForm indirectly or just set it here if we switch manually
+
+            if (item.status === 'Completed') {
+                openMatchResultForm(item);
+            } else {
+                setMatchMode('schedule');
+            }
+        }
+    };
+
+    const openMatchResultForm = (match: any) => {
+        setMatchMode('result');
+        setEditingItem(match);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Pre-fill with strict defaults to avoid "uncontrolled" error
+        setValResult('match_id', match.match_id);
+        setValResult('team1_id', match.team1_id);
+        setValResult('team2_id', match.team2_id);
+        setValResult('team1_goals', match.team1_goals !== undefined && match.team1_goals !== null ? match.team1_goals.toString() : '0');
+        setValResult('team2_goals', match.team2_goals !== undefined && match.team2_goals !== null ? match.team2_goals.toString() : '0');
     };
 
     const handleManage = (tab: 'tournament' | 'team' | 'player' | 'match') => {
         setActiveTab(tab);
         setView('manage');
         setEditingItem(null);
+        if (tab === 'match') setMatchMode('schedule'); // Default to schedule
     };
 
     if (!user) return null;
@@ -252,8 +321,28 @@ function AdminDashboardContent() {
                     <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 sticky top-8">
                         <h2 className="text-xl font-bold mb-6 flex items-center text-slate-800 dark:text-white">
                             {editingItem ? <Edit className="w-5 h-5 mr-2 text-blue-600" /> : <Plus className="w-5 h-5 mr-2 text-blue-600" />}
-                            {editingItem ? 'Edit' : 'Add New'} {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                            {activeTab === 'match'
+                                ? (matchMode === 'schedule' ? 'Schedule Match' : 'Enter Match Result')
+                                : (editingItem ? 'Edit' : 'Add New') + ' ' + activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
                         </h2>
+
+                        {/* Toggle for Match Mode (Always visible for Matches) */}
+                        {activeTab === 'match' && (
+                            <div className="flex mb-4 bg-slate-100 dark:bg-slate-700 p-1 rounded-lg">
+                                <button
+                                    onClick={() => setMatchMode('schedule')}
+                                    className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${matchMode === 'schedule' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
+                                >
+                                    Schedule
+                                </button>
+                                <button
+                                    onClick={() => setMatchMode('result')}
+                                    className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${matchMode === 'result' ? 'bg-green-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
+                                >
+                                    Result
+                                </button>
+                            </div>
+                        )}
 
                         {activeTab === 'tournament' && (
                             <form onSubmit={handleSubmitTournament((data) => onSubmit('/tournaments', data, resetTournament, 'Tournament saved!'))} className="space-y-4">
@@ -272,8 +361,10 @@ function AdminDashboardContent() {
                                     <FormInput label="Teams" type="number" {...registerTournament('no_of_teams')} />
                                     <FormInput label="Matches" type="number" {...registerTournament('no_of_matches')} />
                                 </div>
-                                <FormInput label="Start Date" type="date" {...registerTournament('start_date')} />
-                                <FormInput label="End Date" type="date" {...registerTournament('end_date')} />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormInput label="Start Date" type="date" {...registerTournament('start_date')} />
+                                    <FormInput label="End Date" type="date" {...registerTournament('end_date')} />
+                                </div>
                                 <button type="submit" className="w-full bg-slate-900 dark:bg-blue-600 text-white py-2.5 rounded-lg hover:bg-slate-800 dark:hover:bg-blue-700 font-medium">
                                     {editingItem ? 'Update Tournament' : 'Create Tournament'}
                                 </button>
@@ -311,7 +402,15 @@ function AdminDashboardContent() {
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <FormInput label="Jersey #" type="number" {...registerPlayer('jersey_number')} />
-                                    <FormInput label="Team ID" type="number" {...registerPlayer('team_id')} />
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Team</label>
+                                        <select {...registerPlayer('team_id')} className="w-full px-3 py-2 border rounded-md border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                                            <option value="">Select Team</option>
+                                            {teamList.map((t) => (
+                                                <option key={t.team_id} value={t.team_id}>{t.team_name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
                                 <button type="submit" className="w-full bg-slate-900 dark:bg-blue-600 text-white py-2.5 rounded-lg hover:bg-slate-800 dark:hover:bg-blue-700 font-medium">
                                     {editingItem ? 'Update Player' : 'Add Player'}
@@ -319,25 +418,61 @@ function AdminDashboardContent() {
                             </form>
                         )}
 
-                        {activeTab === 'match' && (
-                            <form onSubmit={handleSubmitMatch((data) => onSubmit('/matches/result', data, resetMatch, 'Result saved!'))} className="space-y-4">
-                                <FormInput label="Match ID" type="number" {...registerMatch('match_id')} />
+                        {activeTab === 'match' && matchMode === 'schedule' && (
+                            <form onSubmit={handleSubmitSchedule((data) => onSubmit('/matches', data, resetSchedule, 'Match Scheduled!'))} className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
-                                    <FormInput label="Team 1 ID" type="number" {...registerMatch('team1_id')} />
-                                    <FormInput label="Team 1 Goals" type="number" {...registerMatch('team1_goals')} />
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Team 1</label>
+                                        <select {...registerSchedule('team1_id')} className="w-full px-3 py-2 border rounded-md border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                                            <option value="">Select Home Team</option>
+                                            {teamList.map((t) => (
+                                                <option key={t.team_id} value={t.team_id}>{t.team_name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Team 2</label>
+                                        <select {...registerSchedule('team2_id')} className="w-full px-3 py-2 border rounded-md border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                                            <option value="">Select Away Team</option>
+                                            {teamList.map((t) => (
+                                                <option key={t.team_id} value={t.team_id}>{t.team_name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
+                                <FormInput label="Date" type="date" {...registerSchedule('match_date')} />
+                                <FormInput label="Venue" {...registerSchedule('venue')} />
+                                <button type="submit" className="w-full bg-slate-900 dark:bg-green-600 text-white py-2.5 rounded-lg hover:bg-slate-800 dark:hover:bg-green-700 font-medium">
+                                    {editingItem ? 'Update Match Details' : 'Schedule Match'}
+                                </button>
+                            </form>
+                        )}
+
+                        {activeTab === 'match' && matchMode === 'result' && (
+                            <form onSubmit={handleSubmitResult((data) => onSubmit('/matches/result', data, resetResult, 'Result Updated!'))} className="space-y-4">
+                                <div className="p-3 bg-blue-50 dark:bg-slate-700 rounded-lg mb-4 text-center">
+                                    <span className="text-sm text-slate-500 block">Enter Result</span>
+                                    {editingItem && <div className="text-sm font-medium mt-1">{editingItem.team1_name} vs {editingItem.team2_name}</div>}
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-4">
+                                    <FormInput label="Match ID (Required)" type="number" {...registerResult('match_id')} />
+                                </div>
+                                <input type="hidden" {...registerResult('team1_id')} value={editingItem?.team1_id || 0} />
+                                <input type="hidden" {...registerResult('team2_id')} value={editingItem?.team2_id || 0} />
+
                                 <div className="grid grid-cols-2 gap-4">
-                                    <FormInput label="Team 2 ID" type="number" {...registerMatch('team2_id')} />
-                                    <FormInput label="Team 2 Goals" type="number" {...registerMatch('team2_goals')} />
+                                    <FormInput label={`${editingItem?.team1_name || 'Team 1'} Goals`} type="number" {...registerResult('team1_goals')} />
+                                    <FormInput label={`${editingItem?.team2_name || 'Team 2'} Goals`} type="number" {...registerResult('team2_goals')} />
                                 </div>
                                 <button type="submit" className="w-full bg-slate-900 dark:bg-blue-600 text-white py-2.5 rounded-lg hover:bg-slate-800 dark:hover:bg-blue-700 font-medium">
-                                    {editingItem ? 'Update Result' : 'Record Result'}
+                                    Save Result & Update Table
                                 </button>
                             </form>
                         )}
 
                         {editingItem && (
-                            <button onClick={() => { setEditingItem(null); resetTeam(); resetPlayer(); resetMatch(); resetTournament(); }} className="w-full mt-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 py-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 font-medium">
+                            <button onClick={() => { setEditingItem(null); resetTeam(); resetPlayer(); resetResult(); resetTournament(); resetSchedule(); setMatchMode('schedule'); }} className="w-full mt-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 py-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 font-medium">
                                 Cancel Edit
                             </button>
                         )}
@@ -359,7 +494,7 @@ function AdminDashboardContent() {
                                     <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
                                         <thead className="bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white font-semibold">
                                             <tr>
-                                                <th className="px-4 py-3">ID</th>
+                                                <th className="px-4 py-3">{activeTab === 'player' ? 'Jersey #' : 'ID'}</th>
                                                 <th className="px-4 py-3">Name/Details</th>
                                                 <th className="px-4 py-3">Extra Info</th>
                                                 <th className="px-4 py-3 text-right">Actions</th>
@@ -368,21 +503,35 @@ function AdminDashboardContent() {
                                         <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                                             {dataList.map((item, idx) => (
                                                 <tr key={idx} className={`hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${editingItem === item ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
-                                                    <td className="px-4 py-3 font-mono text-xs">{item.id || item.team_id || item.player_id || item.match_id || item.tournament_id}</td>
+                                                    <td className="px-4 py-3 font-mono text-xs">
+                                                        {activeTab === 'player'
+                                                            ? item.jersey_number
+                                                            : (item.id || item.team_id || item.player_id || item.match_id || item.tournament_id)}
+                                                    </td>
                                                     <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
-                                                        {item.name || item.team_name || `Match #${item.match_id}`}
+                                                        {item.name || item.team_name || (
+                                                            <div className="flex flex-col">
+                                                                <span>{item.team1_name} vs {item.team2_name}</span>
+                                                                <span className="text-xs text-slate-500">{new Date(item.match_date).toLocaleDateString()}</span>
+                                                            </div>
+                                                        )}
                                                     </td>
                                                     <td className="px-4 py-3">
                                                         {activeTab === 'team' && `Coach: ${item.coach_name}`}
-                                                        {activeTab === 'player' && `${item.position} - ${item.team_name}`}
+                                                        {activeTab === 'player' && `${item.position} - ${item.team_name || item.team_id}`}
                                                         {activeTab === 'tournament' && `${item.host_country} (${item.type})`}
-                                                        {activeTab === 'match' && `${item.team1_name} vs ${item.team2_name}`}
+                                                        {activeTab === 'match' && (item.status === 'Completed' ? <span className="text-green-600 font-bold">{item.team1_goals} - {item.team2_goals}</span> : <span className="text-orange-500 bg-orange-50 px-2 py-1 rounded text-xs">Scheduled</span>)}
                                                     </td>
                                                     <td className="px-4 py-3 text-right space-x-2">
+                                                        {activeTab === 'match' && item.status !== 'Completed' && (
+                                                            <button onClick={() => openMatchResultForm(item)} className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900 rounded-md" title="Add Result">
+                                                                <CheckCircle className="w-4 h-4" />
+                                                            </button>
+                                                        )}
                                                         <button onClick={() => handleEdit(item)} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-md" title="Edit">
                                                             <Edit className="w-4 h-4" />
                                                         </button>
-                                                        <button onClick={() => handleDelete(item.id || item.team_id || item.player_id || item.match_id || item.tournament_id)} className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900 rounded-md" title="Delete">
+                                                        <button onClick={() => handleDelete(item.player_id || item.team_id || item.tournament_id || item.match_id || item.id)} className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900 rounded-md" title="Delete">
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>
                                                     </td>

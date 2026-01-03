@@ -1,21 +1,20 @@
 -- ============================================================
--- ⚽ FOOTBALL TOURNAMENT & LEAGUE MANAGEMENT SYSTEM PROJECT
--- ============================================================
--- Includes all DDL and DML commands for DBMS Mini Project
+-- ⚽ FOOTBALL LEAGUE MANAGEMENT SYSTEM
+-- DBMS Mini Project
 -- ============================================================
 
--- ======================
--- 🧱 DDL COMMANDS
--- ======================
-
--- 1️⃣ CREATE DATABASE
+-- ============================================================
+-- 1️⃣ DATABASE CREATION
+-- ============================================================
 DROP DATABASE IF EXISTS FootballLeagueDB;
 CREATE DATABASE FootballLeagueDB;
 USE FootballLeagueDB;
 
--- ------------------------------------------------------------
--- 2️⃣ CREATE TABLE: TOURNAMENT
--- ------------------------------------------------------------
+-- ============================================================
+-- 2️⃣ TABLE CREATION (DDL)
+-- ============================================================
+
+-- Table: TOURNAMENT
 CREATE TABLE Tournament (
     tournament_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -27,9 +26,7 @@ CREATE TABLE Tournament (
     end_date DATE
 );
 
--- ------------------------------------------------------------
--- 3️⃣ CREATE TABLE: TEAM
--- ------------------------------------------------------------
+-- Table: TEAM
 CREATE TABLE Team (
     team_id INT AUTO_INCREMENT PRIMARY KEY,
     team_name VARCHAR(100) NOT NULL,
@@ -40,9 +37,7 @@ CREATE TABLE Team (
         ON DELETE CASCADE
 );
 
--- ------------------------------------------------------------
--- 4️⃣ CREATE TABLE: PLAYER
--- ------------------------------------------------------------
+-- Table: PLAYER
 CREATE TABLE Player (
     player_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -57,9 +52,7 @@ CREATE TABLE Player (
         ON DELETE CASCADE
 );
 
--- ------------------------------------------------------------
--- 5️⃣ CREATE TABLE: MATCHES
--- ------------------------------------------------------------
+-- Table: MATCHES
 CREATE TABLE Matches (
     match_id INT AUTO_INCREMENT PRIMARY KEY,
     tournament_id INT,
@@ -76,9 +69,7 @@ CREATE TABLE Matches (
         ON DELETE CASCADE
 );
 
--- ------------------------------------------------------------
--- 6️⃣ CREATE TABLE: SCORE
--- ------------------------------------------------------------
+-- Table: SCORE
 CREATE TABLE Score (
     score_id INT AUTO_INCREMENT PRIMARY KEY,
     match_id INT,
@@ -92,9 +83,10 @@ CREATE TABLE Score (
         ON DELETE CASCADE
 );
 
--- ------------------------------------------------------------
--- 7️⃣ CREATE VIEW: LEADERBOARD
--- ------------------------------------------------------------
+-- ============================================================
+-- 3️⃣ VIEW CREATION
+-- ============================================================
+
 CREATE VIEW Leaderboard AS
 SELECT 
     t.team_id,
@@ -110,19 +102,15 @@ JOIN Score s ON t.team_id = s.team_id
 GROUP BY t.team_id, t.team_name
 ORDER BY total_points DESC, goals_for DESC;
 
--- ======================
--- 🧩 DML COMMANDS
--- ======================
+-- ============================================================
+-- 4️⃣ DATA INSERTION (DML)
+-- ============================================================
 
--- ------------------------------------------------------------
--- 1️⃣ INSERT DATA INTO TOURNAMENT
--- ------------------------------------------------------------
+-- Insert: TOURNAMENT
 INSERT INTO Tournament (name, type, host_country, no_of_teams, no_of_matches, start_date, end_date)
 VALUES ('Numinova Football League', 'League', 'India', 4, 6, '2025-10-01', '2025-10-15');
 
--- ------------------------------------------------------------
--- 2️⃣ INSERT DATA INTO TEAM
--- ------------------------------------------------------------
+-- Insert: TEAM
 INSERT INTO Team (team_name, coach_name, foundation_year, tournament_id)
 VALUES 
 ('Titans FC', 'Arjun Mehta', 1998, 1),
@@ -130,9 +118,7 @@ VALUES
 ('Lions SC', 'Rohan Patel', 2005, 1),
 ('Panthers FC', 'Sameer Khan', 2010, 1);
 
--- ------------------------------------------------------------
--- 3️⃣ INSERT DATA INTO PLAYER
--- ------------------------------------------------------------
+-- Insert: PLAYER
 INSERT INTO Player (name, age, gender, position, height_cm, weight_kg, jersey_number, team_id) VALUES
 ('Rahul Singh', 24, 'M', 'Forward', 178.5, 72.3, 9, 1),
 ('Vikram Desai', 27, 'M', 'Midfielder', 175.2, 70.8, 8, 1),
@@ -141,9 +127,7 @@ INSERT INTO Player (name, age, gender, position, height_cm, weight_kg, jersey_nu
 ('Kunal Joshi', 28, 'M', 'Forward', 177.0, 71.0, 10, 3),
 ('Amit Rao', 26, 'M', 'Midfielder', 172.5, 68.4, 6, 4);
 
--- ------------------------------------------------------------
--- 4️⃣ INSERT DATA INTO MATCHES
--- ------------------------------------------------------------
+-- Insert: MATCHES
 INSERT INTO Matches (tournament_id, team1_id, team2_id, match_date, venue, status)
 VALUES
 (1, 1, 2, '2025-10-02', 'Mumbai Arena', 'Completed'),
@@ -151,9 +135,7 @@ VALUES
 (1, 1, 3, '2025-10-05', 'Kolkata Ground', 'Completed'),
 (1, 2, 4, '2025-10-06', 'Pune Turf', 'Completed');
 
--- ------------------------------------------------------------
--- 5️⃣ INSERT DATA INTO SCORE
--- ------------------------------------------------------------
+-- Insert: SCORE
 INSERT INTO Score (match_id, team_id, goals_scored, points, result_type)
 VALUES
 (1, 1, 2, 3, 'Win'),
@@ -165,71 +147,13 @@ VALUES
 (4, 2, 3, 3, 'Win'),
 (4, 4, 2, 0, 'Loss');
 
--- ------------------------------------------------------------
--- 6️⃣ SELECT QUERIES (Data Retrieval)
--- ------------------------------------------------------------
-
--- Show all teams with their coaches
-SELECT team_name, coach_name, foundation_year FROM Team;
-
--- Show all players of a specific team
-SELECT p.name, p.position, t.team_name
-FROM Player p
-JOIN Team t ON p.team_id = t.team_id
-WHERE t.team_name = 'Titans FC';
-
--- Show match results with winning team
-SELECT m.match_id, t.team_name AS Team, s.goals_scored, s.result_type
-FROM Matches m
-JOIN Score s ON m.match_id = s.match_id
-JOIN Team t ON s.team_id = t.team_id
-WHERE m.status = 'Completed';
-
--- Display the leaderboard
-SELECT * FROM Leaderboard;
-
--- Find the top scoring team
-SELECT team_name, total_points
-FROM Leaderboard
-ORDER BY total_points DESC
-LIMIT 1;
-
--- ------------------------------------------------------------
--- 7️⃣ UPDATE EXAMPLE
--- ------------------------------------------------------------
--- Update a player's weight
-SET SQL_SAFE_UPDATES = 0;
-UPDATE Player
-SET weight_kg = 73.5
-WHERE name = 'Rahul Singh';
-SET SQL_SAFE_UPDATES = 1;
-
--- ------------------------------------------------------------
--- 8️⃣ DELETE EXAMPLE
--- ------------------------------------------------------------
--- Delete a player (e.g., removing injured player)
-SET SQL_SAFE_UPDATES = 0;
-
-DELETE FROM Player
-WHERE name = 'Amit Rao';
-
-SET SQL_SAFE_UPDATES = 1;
-
-
--- ------------------------------------------------------------
--- 9️⃣ SHOW UPDATED RESULTS
--- ------------------------------------------------------------
-SELECT * FROM Player;
-SELECT * FROM Leaderboard;
-
 -- ============================================================
--- ✅ ADDITIONAL OBJECTS: TRIGGERS, PROCEDURES, FUNCTIONS
+-- 5️⃣ DATABASE OBJECTS (Triggers, Procedures, Functions)
 -- ============================================================
 
--- ------------------------------------------------------------
--- ⚡ TRIGGER 1: Auto-update Tournament Match Count
--- ------------------------------------------------------------
 DELIMITER $$
+
+-- Trigger: Auto-update Tournament Match Count
 CREATE TRIGGER trg_update_match_count
 AFTER INSERT ON Matches
 FOR EACH ROW
@@ -238,12 +162,8 @@ BEGIN
     SET no_of_matches = no_of_matches + 1
     WHERE tournament_id = NEW.tournament_id;
 END $$
-DELIMITER ;
 
--- ------------------------------------------------------------
--- ⚡ TRIGGER 2: Prevent Negative Goals or Points
--- ------------------------------------------------------------
-DELIMITER $$
+-- Trigger: Prevent Negative Goals or Points
 CREATE TRIGGER trg_validate_score
 BEFORE INSERT ON Score
 FOR EACH ROW
@@ -253,12 +173,8 @@ BEGIN
         SET MESSAGE_TEXT = 'Goals and Points must be non-negative!';
     END IF;
 END $$
-DELIMITER ;
 
--- ------------------------------------------------------------
--- ⚙️ PROCEDURE 1: Add Match Result
--- ------------------------------------------------------------
-DELIMITER $$
+-- Procedure: Add Match Result with Transaction
 CREATE PROCEDURE AddMatchResult(
     IN p_match_id INT,
     IN p_team1_id INT,
@@ -273,13 +189,13 @@ BEGIN
     DECLARE team1_result VARCHAR(10);
     DECLARE team2_result VARCHAR(10);
 
-    -- check match exists
+    -- Check if match exists
     SELECT COUNT(*) INTO cnt FROM Matches WHERE match_id = p_match_id;
     IF cnt = 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Match ID does not exist in Matches table.';
     END IF;
 
-    -- determine results
+    -- Determine results
     IF p_team1_goals > p_team2_goals THEN
         SET team1_points = 3; SET team2_points = 0;
         SET team1_result = 'Win'; SET team2_result = 'Loss';
@@ -292,7 +208,7 @@ BEGIN
     END IF;
 
     START TRANSACTION;
-    -- optional: remove existing scores for this match to avoid duplicates
+    -- Optional: remove existing scores for this match to avoid duplicates
     DELETE FROM Score WHERE match_id = p_match_id;
 
     INSERT INTO Score (match_id, team_id, goals_scored, points, result_type)
@@ -305,13 +221,8 @@ BEGIN
 
     COMMIT;
 END $$
-DELIMITER ;
 
-
--- ------------------------------------------------------------
--- ⚙️ PROCEDURE 2: Team Performance Summary
--- ------------------------------------------------------------
-DELIMITER $$
+-- Procedure: Team Performance Summary
 CREATE PROCEDURE TeamPerformance(IN p_team_name VARCHAR(100))
 BEGIN
     SELECT 
@@ -324,12 +235,8 @@ BEGIN
     WHERE t.team_name = p_team_name
     GROUP BY t.team_name;
 END $$
-DELIMITER ;
 
--- ------------------------------------------------------------
--- 🧮 FUNCTION: Calculate Team Win Percentage
--- ------------------------------------------------------------
-DELIMITER $$
+-- Function: Calculate Win Percentage
 CREATE FUNCTION GetWinPercentage(p_team_id INT)
 RETURNS DECIMAL(5,2)
 DETERMINISTIC
@@ -356,15 +263,35 @@ BEGIN
 
     RETURN win_percentage;
 END $$
+
 DELIMITER ;
 
--- ------------------------------------------------------------
--- 🧪 TESTING CALLS (optional)
--- ------------------------------------------------------------
-CALL AddMatchResult(3, 1, 2, 3, 1);
-CALL TeamPerformance('Titans FC');
-SELECT team_name, GetWinPercentage(team_id) AS WinRate FROM Team;
+-- ============================================================
+-- 6️⃣ SAMPLE QUERIES (Examples for Evaluation)
+-- ============================================================
+-- Note: These are commented out to preserve data state during evaluation.
+-- Uncomment to test specific functionalities.
+
+/*
+-- Show all teams
+SELECT team_name, coach_name, foundation_year FROM Team;
+
+-- Show players of 'Titans FC'
+SELECT p.name, p.position, t.team_name
+FROM Player p
+JOIN Team t ON p.team_id = t.team_id
+WHERE t.team_name = 'Titans FC';
+
+-- Show Leaderboard
+SELECT * FROM Leaderboard;
+
+-- Delete Example (Uncommenting this will remove 'Amit Rao'!)
+-- DELETE FROM Player WHERE name = 'Amit Rao';
+
+-- Update Example
+-- UPDATE Player SET weight_kg = 73.5 WHERE name = 'Rahul Singh';
+*/
 
 -- ============================================================
--- ✅ END OF PROJECT (ALL DDL + DML + TRIGGERS + PROCEDURES + FUNCTION)
+-- END OF SCRIPT
 -- ============================================================
