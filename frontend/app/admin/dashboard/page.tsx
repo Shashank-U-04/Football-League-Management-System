@@ -48,11 +48,11 @@ const scheduleMatchSchema = z.object({
 });
 
 const matchResultSchema = z.object({
-    match_id: z.number(),
-    team1_id: z.number(),
-    team1_goals: z.string().transform((val) => parseInt(val, 10)),
-    team2_id: z.number(),
-    team2_goals: z.string().transform((val) => parseInt(val, 10)),
+    match_id: z.coerce.number(),
+    team1_id: z.coerce.number(),
+    team1_goals: z.coerce.number(),
+    team2_id: z.coerce.number(),
+    team2_goals: z.coerce.number(),
 });
 
 function AdminDashboardContent() {
@@ -239,6 +239,21 @@ function AdminDashboardContent() {
         setValResult('team2_id', match.team2_id);
         setValResult('team1_goals', match.team1_goals !== undefined && match.team1_goals !== null ? match.team1_goals.toString() : '0');
         setValResult('team2_goals', match.team2_goals !== undefined && match.team2_goals !== null ? match.team2_goals.toString() : '0');
+    };
+
+    // Handler for Match Dropdown Selection
+    const handleMatchSelection = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const matchId = parseInt(e.target.value);
+        if (!matchId) {
+            setEditingItem(null);
+            resetResult();
+            return;
+        }
+
+        const match = dataList.find(m => m.match_id === matchId);
+        if (match) {
+            openMatchResultForm(match);
+        }
     };
 
     const handleManage = (tab: 'tournament' | 'team' | 'player' | 'match') => {
@@ -451,21 +466,42 @@ function AdminDashboardContent() {
                         {activeTab === 'match' && matchMode === 'result' && (
                             <form onSubmit={handleSubmitResult((data) => onSubmit('/matches/result', data, resetResult, 'Result Updated!'))} className="space-y-4">
                                 <div className="p-3 bg-blue-50 dark:bg-slate-700 rounded-lg mb-4 text-center">
-                                    <span className="text-sm text-slate-500 block">Enter Result</span>
-                                    {editingItem && <div className="text-sm font-medium mt-1">{editingItem.team1_name} vs {editingItem.team2_name}</div>}
+                                    <span className="text-xl font-bold text-slate-700 dark:text-white block">Enter Match Result</span>
                                 </div>
 
-                                <div className="grid grid-cols-1 gap-4">
-                                    <FormInput label="Match ID (Required)" type="number" {...registerResult('match_id')} />
+                                <div className="space-y-1">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Select Match to Update</label>
+                                    <select
+                                        {...registerResult('match_id')}
+                                        onChange={handleMatchSelection}
+                                        className="w-full px-3 py-2 border rounded-md border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                                    >
+                                        <option value="">-- Select a Match --</option>
+                                        {dataList.filter(m => m.status !== 'Completed').map((m) => (
+                                            <option key={m.match_id} value={m.match_id}>
+                                                ID {m.match_id}: {m.team1_name} vs {m.team2_name} ({new Date(m.match_date).toLocaleDateString()})
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
+
                                 <input type="hidden" {...registerResult('team1_id')} value={editingItem?.team1_id || 0} />
                                 <input type="hidden" {...registerResult('team2_id')} value={editingItem?.team2_id || 0} />
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <FormInput label={`${editingItem?.team1_name || 'Team 1'} Goals`} type="number" {...registerResult('team1_goals')} />
-                                    <FormInput label={`${editingItem?.team2_name || 'Team 2'} Goals`} type="number" {...registerResult('team2_goals')} />
-                                </div>
-                                <button type="submit" className="w-full bg-slate-900 dark:bg-blue-600 text-white py-2.5 rounded-lg hover:bg-slate-800 dark:hover:bg-blue-700 font-medium">
+                                {editingItem && (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormInput label={`${editingItem.team1_name} Goals`} type="number" {...registerResult('team1_goals')} />
+                                        <FormInput label={`${editingItem.team2_name} Goals`} type="number" {...registerResult('team2_goals')} />
+                                    </div>
+                                )}
+
+                                {!editingItem && (
+                                    <div className="p-4 text-center text-slate-500 text-sm">
+                                        Please select a match above to enter scores.
+                                    </div>
+                                )}
+
+                                <button type="submit" disabled={!editingItem} className="w-full disabled:opacity-50 bg-slate-900 dark:bg-blue-600 text-white py-2.5 rounded-lg hover:bg-slate-800 dark:hover:bg-blue-700 font-medium">
                                     Save Result & Update Table
                                 </button>
                             </form>
@@ -523,11 +559,6 @@ function AdminDashboardContent() {
                                                         {activeTab === 'match' && (item.status === 'Completed' ? <span className="text-green-600 font-bold">{item.team1_goals} - {item.team2_goals}</span> : <span className="text-orange-500 bg-orange-50 px-2 py-1 rounded text-xs">Scheduled</span>)}
                                                     </td>
                                                     <td className="px-4 py-3 text-right space-x-2">
-                                                        {activeTab === 'match' && item.status !== 'Completed' && (
-                                                            <button onClick={() => openMatchResultForm(item)} className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900 rounded-md" title="Add Result">
-                                                                <CheckCircle className="w-4 h-4" />
-                                                            </button>
-                                                        )}
                                                         <button onClick={() => handleEdit(item)} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-md" title="Edit">
                                                             <Edit className="w-4 h-4" />
                                                         </button>

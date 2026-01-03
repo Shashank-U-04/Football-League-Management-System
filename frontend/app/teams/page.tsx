@@ -15,39 +15,48 @@ interface Team {
 
 export default function TeamsPage() {
     const [teams, setTeams] = useState<Team[]>([]);
+    const [players, setPlayers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchTeams = async () => {
+        const fetchData = async () => {
             try {
-                const res = await api.get('/teams');
-                setTeams(res.data.data);
+                const [teamsRes, playersRes] = await Promise.all([
+                    api.get('/teams'),
+                    api.get('/players')
+                ]);
+                setTeams(teamsRes.data.data);
+                setPlayers(playersRes.data.data);
             } catch (error) {
-                console.error('Failed to fetch teams', error);
+                console.error('Failed to fetch data', error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchTeams();
+        fetchData();
     }, []);
 
     if (loading) {
-        return <div className="text-center py-20">Loading teams...</div>;
+        return <div className="text-center py-20">Loading teams and players...</div>;
     }
 
     return (
         <div className="space-y-8">
             <div className="text-center space-y-4">
-                <h1 className="text-4xl font-bold text-slate-900">Teams</h1>
+                <h1 className="text-4xl font-bold text-slate-900">Teams & Players</h1>
                 <p className="text-slate-600 max-w-2xl mx-auto">
-                    Meet the contenders fighting for glory in the league.
+                    Meet the contenders and their squads fighting for glory in the league.
                 </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {teams.map((team) => (
-                    <TeamCard key={team.team_id} team={team} />
+                    <TeamCard
+                        key={team.team_id}
+                        team={team}
+                        players={players.filter(p => p.team_id === team.team_id)}
+                    />
                 ))}
             </div>
         </div>
