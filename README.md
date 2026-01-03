@@ -1,11 +1,26 @@
 # Football League Management System (FLMS)
 
-## 1. Introduction
+<div align="center">
+
+[![License](https://img.shields.io/github/license/Shashank-U-04/Football-League-Management-System?style=flat-square)](https://github.com/Shashank-U-04/Football-League-Management-System/blob/master/LICENSE)
+[![Issues](https://img.shields.io/github/issues/Shashank-U-04/Football-League-Management-System?style=flat-square)](https://github.com/Shashank-U-04/Football-League-Management-System/issues)
+[![Pull Requests](https://img.shields.io/github/issues-pr/Shashank-U-04/Football-League-Management-System?style=flat-square)](https://github.com/Shashank-U-04/Football-League-Management-System/pulls)
+[![Stars](https://img.shields.io/github/stars/Shashank-U-04/Football-League-Management-System?style=flat-square)](https://github.com/Shashank-U-04/Football-League-Management-System/stargazers)
+[![Forks](https://img.shields.io/github/forks/Shashank-U-04/Football-League-Management-System?style=flat-square)](https://github.com/Shashank-U-04/Football-League-Management-System/network/members)
+
+![Next.js](https://img.shields.io/badge/Next.js-black?style=flat-square&logo=next.js&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white)
+
+</div>
+
+## Introduction
 The **Football League Management System (FLMS)** is a comprehensive web-based application designed to digitize and automate the management of football tournaments. This project demonstrates the integration of a relational database with a modern full-stack web architecture, featuring automated leaderboards and strict data integrity.
 
 ---
 
-## 2. Key Features
+## Key Features
 
 - **Team & Player Management:** Add, update, and delete teams and their squad members.
 - **Match Scheduling:** Organize fixtures between teams with date and venue.
@@ -15,30 +30,30 @@ The **Football League Management System (FLMS)** is a comprehensive web-based ap
 
 ---
 
-## 3. System Architecture & Technology Stack
+## System Architecture & Technology Stack
 
 The project follows a **3-Tier Architecture**:
 
-### 3.1 Frontend
+### Frontend
 - **Framework:** [Next.js](https://nextjs.org/) (React Framework)
 - **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 
-### 3.2 Backend
+### Backend
 - **Runtime:** [Node.js](https://nodejs.org/) & [Express.js](https://expressjs.com/)
 - **API Pattern:** RESTful API
 
-### 3.3 Database
+### Database
 - **RDBMS:** MySQL
 - **Driver:** `mysql2`
 
 ---
 
-## 4. Database Design
+## Database Design
 
-### 4.1 ER Diagram
+### ER Diagram
 ![ER Diagram](ER%20Diagram.png)
 
-### 4.2 DBMS Concepts Implemented
+### DBMS Concepts Implemented
 - **Normalization:** Schema designed up to **3NF**.
 - **Constraints:** Primary Keys, Foreign Keys, and CHECK constraints.
 - **Triggers:** Automated match count updates and score validation.
@@ -48,7 +63,7 @@ The project follows a **3-Tier Architecture**:
 
 ---
 
-## 5. Directory Structure
+## Directory Structure
 
 ```plaintext
 Football-League-Management-System/
@@ -67,7 +82,7 @@ Football-League-Management-System/
 
 ---
 
-## 6. Installation & Setup Instructions
+## Installation & Setup Instructions
 
 ### Prerequisites
 - **Node.js** (v18 or higher)
@@ -94,7 +109,7 @@ Football-League-Management-System/
 
 ---
 
-## 7. Contribution
+## Contribution
 
 Contributions are welcome!
 1. Fork the repository.
@@ -104,7 +119,7 @@ Contributions are welcome!
 
 ---
 
-## 8. Support & Contact
+## Support & Contact
 
 - **Email:** [shashank.u.shashu1359@gmail.com](mailto:shashank.u.shashu1359@gmail.com)
 - **LinkedIn:** [Shashank U](https://www.linkedin.com/in/shashank-u-016b54330/)
