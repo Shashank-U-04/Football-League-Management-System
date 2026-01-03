@@ -3,10 +3,7 @@
 <div align="center">
 
 [![License](https://img.shields.io/github/license/Shashank-U-04/Football-League-Management-System?style=flat-square)](https://github.com/Shashank-U-04/Football-League-Management-System/blob/master/LICENSE)
-[![Issues](https://img.shields.io/github/issues/Shashank-U-04/Football-League-Management-System?style=flat-square)](https://github.com/Shashank-U-04/Football-League-Management-System/issues)
-[![Pull Requests](https://img.shields.io/github/issues-pr/Shashank-U-04/Football-League-Management-System?style=flat-square)](https://github.com/Shashank-U-04/Football-League-Management-System/pulls)
-[![Stars](https://img.shields.io/github/stars/Shashank-U-04/Football-League-Management-System?style=flat-square)](https://github.com/Shashank-U-04/Football-League-Management-System/stargazers)
-[![Forks](https://img.shields.io/github/forks/Shashank-U-04/Football-League-Management-System?style=flat-square)](https://github.com/Shashank-U-04/Football-League-Management-System/network/members)
+
 
 ![Next.js](https://img.shields.io/badge/Next.js-black?style=flat-square&logo=next.js&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)
